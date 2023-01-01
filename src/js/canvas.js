@@ -1,4 +1,5 @@
 import {randomHue,randomColor,randomIntFromRange} from './utils'
+import gsap from 'gsap';
 
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
@@ -10,13 +11,19 @@ const mouse = {
   x: innerWidth / 2,
   y: innerHeight / 2
 }
-
-const colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66'];
+const center = {
+  x: canvas.width / 2,
+  y: canvas.height / 2
+}
 
 // Event Listeners
 addEventListener('mousemove', (event) => {
-  mouse.x = event.clientX
-  mouse.y = event.clientY
+  gsap.to(mouse, {
+    x: event.clientX - canvas.width / 2,
+    y: event.clientY - canvas.height / 2,
+    duration: 1
+  });
+  angle = Math.atan2(mouse.y, mouse.x);
 });
 
 addEventListener('resize', () => {
@@ -27,12 +34,13 @@ addEventListener('resize', () => {
 });
 
 // Objects
-class Object {
-  constructor(x, y, radius, color) {
+class Particle {
+  constructor(x, y, radius, color, distanceFromCenter) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.color = color;
+    this.distanceFromCenter = distanceFromCenter;
   }
 
   draw() {
@@ -45,28 +53,47 @@ class Object {
 
   update() {
     this.draw();
+
+    this.x = center.x + this.distanceFromCenter * Math.cos(angle);
+    this.y = center.y + this.distanceFromCenter * Math.sin(angle);
   }
 }
 
 // Implementation
-let objects
-function init() {
-  objects = [];
+let particles;
+let angle = 0;
 
-  for (let i = 0; i < 400; i++) {
-    // objects.push()
+function init() {
+  particles = [];
+  const particleCount = 250;
+  const hueIncrement = 360 / particleCount;
+
+  for (let i = 0; i < particleCount; i++) {
+    const x = canvas.width / 2 + i * Math.cos(1);
+    const y = canvas.height / 2 + i * Math.sin(1);
+
+
+    particles.push(
+      new Particle(
+          x,
+          y,
+          5,
+          `hsl(${hueIncrement * i}, 50%, 50%)`,
+          i
+      )
+    );
   }
 }
 
 // Animation Loop
 function animate() {
   requestAnimationFrame(animate);
-  c.clearRect(0, 0, canvas.width, canvas.height);
+  c.fillStyle = 'rgba(0, 0, 0, 0.05)';
+  c.fillRect(0, 0, canvas.width, canvas.height);
 
-  c.fillText('HTML CANVAS BOILERPLATE', mouse.x, mouse.y);
-  // objects.forEach(object => {
-  //  object.update()
-  // })
+  particles.forEach(particle => {
+   particle.update();
+  });
 }
 
 init();
